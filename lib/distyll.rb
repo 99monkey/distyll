@@ -16,6 +16,7 @@ class Distyll
   private
 
   #TODO: keep track of which models have already been traversed, add to those.
+  #TODO: are foreign keys going to be preserved correctly?
   def run_on_associations(model, records)
     puts "Starting Associations for #{model.to_s}"
     model.reflect_on_all_associations.each do |a|

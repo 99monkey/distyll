@@ -1,16 +1,33 @@
 = distyll
 
-Description goes here.
+Suppose that you're writing code for a project that's been in production for a long time.  All said and done,
+the production database size is on the order of 100 GB.  When you've finished writing your new feature, you
+test it on your seeds.  All is well.  However, how do you know that it will work on production data?  How do
+you know that your seeds accurately reflect the variance (and oddities) present in the production data set?
+
+Distyll attempts to solve this by creating a "recent" subset of the production data set.  This could be done
+naively by taking all of the records across the whole database with a created_at above a certain time.
+However, a record created today may have an associated record (via a foreign key) which was created five
+years ago.  If you slice the entire database by created_at timestamps, you'll have foreign keys which point
+nowhere.  Not very helpful for ensuring that your new feature works on production data.
+
+Distyll's solution is to start from a set of "core" ActiveRecord models supplied at initialization time
+(plus a date threshold for these models), and only pull those that have been created since the date
+threshold.  It then traverses all belongs_to relationships from those core models and pulls in all of those
+related records.
+
+Consequently, you end up with a data set that is representative of production, is internally consistent,
+and is smaller.
 
 == Using distyll in your project
 
-1. Add "gem 'distyll'" to your gemfile
-1. Run "bundle install"
-1. Add a "distyll:" database to your database.yml
-1. Run "rake db:create RAILS_ENV=distyll"
-1. Run "rake db:schema:load RAILS_ENV=distyll"
-1. Run "rails console"
-1. Call "Distyll.new", passing it a string of the base model and a date after which records will be copied.
+1. Add +gem 'distyll'+ to your gemfile
+1. Run +bundle install+
+1. Add a +distyll:+ database to your database.yml
+1. Run +rake db:create RAILS_ENV=distyll+
+1. Run +rake db:schema:load RAILS_ENV=distyll+
+1. Run +rails console+
+1. Call +Distyll.new(model_names, created_since)+, passing it an array of strings of the core models and a date after which core records will be copied.
 
 If you need to clear out the distyll database and try again with different parameters, just go back to the "schema:load" step and continue from there.
 
