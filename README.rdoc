@@ -29,7 +29,7 @@ and is smaller.
 1. Run <code>rails console</code>
 1. Call <code>Distyll.new(model_names, created_since)</code>, passing it an array of strings of the core models and a date after which core records will be copied.
 
-If you need to clear out the distyll database and try again with different parameters, just go back to the "schema:load" step and continue from there.
+If you need to clear out the distyll database and try again with different parameters, just go back to the <code>schema:load</code> step and continue from there.
 
 == Contributing to distyll
 
