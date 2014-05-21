@@ -21,13 +21,13 @@ and is smaller.
 
 == Using distyll in your project
 
-1. Add +gem 'distyll'+ to your gemfile
-1. Run +bundle install+
-1. Add a +distyll:+ database to your database.yml
-1. Run +rake db:create RAILS_ENV=distyll+
-1. Run +rake db:schema:load RAILS_ENV=distyll+
-1. Run +rails console+
-1. Call +Distyll.new(model_names, created_since)+, passing it an array of strings of the core models and a date after which core records will be copied.
+1. Add <code>gem 'distyll'</code> to your gemfile
+1. Run <code>bundle install</code>
+1. Add a <code>distyll:</code> database to your database.yml
+1. Run <code>rake db:create RAILS_ENV=distyll</code>
+1. Run <code>rake db:schema:load RAILS_ENV=distyll</code>
+1. Run <code>rails console</code>
+1. Call <code>Distyll.new(model_names, created_since)</code>, passing it an array of strings of the core models and a date after which core records will be copied.
 
 If you need to clear out the distyll database and try again with different parameters, just go back to the "schema:load" step and continue from there.
 
