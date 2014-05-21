@@ -17,8 +17,8 @@ Jeweler::Tasks.new do |gem|
   gem.name = "distyll"
   gem.homepage = "http://github.com/masonfmatthews/distyll"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.summary = %Q{A gem for distilling a massive database into a recent (and smaller) data set}
+  gem.description = %Q{Have you ever had a 100GB production database and been unable to test on an internally consistent subset of the data?  Distyll is your answer.}
   gem.email = "mason.f.matthews@gmail.com"
   gem.authors = ["Mason F. Matthews"]
   # dependencies defined in Gemfile

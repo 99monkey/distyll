@@ -2,8 +2,20 @@
 
 Description goes here.
 
+== Using distyll in your project
+
+1. Add "gem 'distyll'" to your gemfile
+1. Run "bundle install"
+1. Add a "distyll:" database to your database.yml
+1. Run "rake db:create RAILS_ENV=distyll"
+1. Run "rake db:schema:load RAILS_ENV=distyll"
+1. Run "rails console"
+1. Call "Distyll.new", passing it a string of the base model and a date after which records will be copied.
+
+If you need to clear out the distyll database and try again with different parameters, just go back to the "schema:load" step and continue from there.
+
 == Contributing to distyll
- 
+
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it.
 * Fork the project.
