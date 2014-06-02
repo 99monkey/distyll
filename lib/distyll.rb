@@ -35,8 +35,6 @@ class Distyll
 
   private
 
-  #TODO: keep track of which models have already been traversed, add to those.
-  #TODO: "oh, crap" on self-referential joins
   def run_on_associations(records)
     return if records.blank?
 
@@ -70,7 +68,7 @@ class Distyll
 
     associated_records = []
     records.each do |r|
-      associated_records << r.send(association.name) #TODO: only works for belongs_to.  Need to consider += for other association types
+      associated_records << r.send(association.name)
     end
     associated_records.compact.uniq
   end

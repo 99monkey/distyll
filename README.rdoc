@@ -41,6 +41,14 @@ If you need to clear out the distyll database and try again with different param
 * Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
 * Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
 
+== Next Steps for distyll
+
+* Distyll only traverses belongs_to associations for now.  Need to consider += for other association types.
+* Self-referential joins cause a stack overflow at the moment... that should be surmountable.
+* I need to keep track of which models have already been traversed, and not recurse infinitely.  I should, however, get all the right records (if possible).
+* This doesn't work on models with devise set up.  It's expecting me to pass a "password" when creating the new records, but all I have is the encrypted password and the salt.
+* Tests.  (I know.  I would like to try TDD on my next project.)
+
 == Copyright
 
 Copyright (c) 2014 Mason F. Matthews. See LICENSE.txt for
