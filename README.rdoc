@@ -44,8 +44,9 @@ If you need to clear out the distyll database and try again with different param
 == Next Steps for distyll
 
 * Distyll only traverses belongs_to associations for now.  Need to consider other association types.
+* Is likely to cause problems with single table inheritance.  Could probably refer to table names rather than model names when traversing relationships... but this would still be an issue for the base models.
 * Currently performs "IN" query.  In Oracle, this is limited to 1000 values, so I would need to chunk them for that DBMS.
-* Tests.  (I know.  I would like to try TDD on my next project.)
+* Tests.  I know.  I just don't yet have my head around how to test something that's SO model- and database-centric, when those models and databases aren't present in the gem.  Any advice would be appreciated.
 
 == Copyright
 
