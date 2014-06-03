@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
     "README.rdoc",
     "Rakefile",
     "VERSION",
+    "distyll.gemspec",
     "lib/distyll.rb",
     "test/helper.rb",
     "test/test_distyll.rb"
