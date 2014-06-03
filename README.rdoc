@@ -43,10 +43,8 @@ If you need to clear out the distyll database and try again with different param
 
 == Next Steps for distyll
 
-* Distyll only traverses belongs_to associations for now.  Need to consider += for other association types.
-* Self-referential joins cause a stack overflow at the moment... that should be surmountable.
-* I need to keep track of which models have already been traversed, and not recurse infinitely.  I should, however, get all the right records (if possible).
-* This doesn't work on models with devise set up.  It's expecting me to pass a "password" when creating the new records, but all I have is the encrypted password and the salt.
+* Distyll only traverses belongs_to associations for now.  Need to consider other association types.
+* Currently performs "IN" query.  In Oracle, this is limited to 1000 values, so I would need to chunk them for that DBMS.
 * Tests.  (I know.  I would like to try TDD on my next project.)
 
 == Copyright

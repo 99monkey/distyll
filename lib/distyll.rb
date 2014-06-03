@@ -1,76 +1,120 @@
 class Distyll
 
-  attr_reader :base_models, :model_forest, :created_since
+  attr_reader :base_models, :model_profiles, :created_since
 
   def initialize(bms, cs)
     @created_since = cs.to_date
     @base_models = bms.map &:constantize
-    @model_forest = Distyll.build_model_forest(base_models)
+    set_model_profiles
   end
 
   def run
-    base_models.each do |base_model|
-      records = base_model.where("created_at >= ?", created_since).order(:id).load
-      run_on_associations(records)
-      copy_records(records)
+    base_models.each do |model|
+      @model_profiles[model].load_ids_by_timestamp(@created_since)
     end
-  end
 
-  def self.build_model_forest(model_array)
-    tree = {}
-    model_array.each { |m| tree[m] = build_model_tree(m) }
-    tree
-  end
+    prior_count = -1
+    while prior_count != current_count
+      prior_count = current_count
+      @model_profiles.each_value &:demote_new_ids
 
-  def self.build_model_tree(model)
-    branch = {}
-    model.reflect_on_all_associations.each do |association|
-      if association.belongs_to? && association.through_reflection.nil?
-        branch[association.klass] = build_model_tree(association.klass)
+      @model_profiles.each_value do |profile|
+        profile.associations.each do |a|
+          @model_profiles[a.klass].load_ids(profile.get_new_associated_ids(a))
+        end
       end
     end
-    branch
+
+    @model_profiles.each_value do |profile|
+      profile.copy_records
+    end
   end
 
 
   private
 
-  def run_on_associations(records)
-    return if records.blank?
-
-    model = records.first.class
-    puts "Starting Associations for #{model.to_s}"
-
-    model.reflect_on_all_associations.each do |association|
-      if association.belongs_to? && association.through_reflection.nil?
-        associated_records = get_associated_records(records, association)
-        run_on_associations(associated_records)
-        copy_records(associated_records)
-      end
+  def set_model_profiles
+    @model_profiles = Hash.new
+    base_models.each do |bm|
+      @model_profiles = potentially_add_profiles(bm, @model_profiles)
     end
   end
 
-  def copy_records(records)
-    return if records.blank?
+  def potentially_add_profiles(model, profiles)
+    return profiles if profiles.include? model
+    profiles[model] = DistyllModelProfile.new(model)
+    profiles[model].associations.each do |a|
+      profiles = potentially_add_profiles(a.klass, profiles)
+    end
+    profiles
+  end
 
-    model = records.first.class
-    puts "Copying Records for #{model.to_s}"
+  def current_count
+    model_profiles.each_value.sum &:get_id_count
+  end
+
+end
+
+
+
+class DistyllModelProfile
+  attr_reader :model, :record_count, :associations, :all_ids, :last_ids, :new_ids
+
+  def initialize(m)
+    @model = m
+    @record_count = m.count
+    @all_ids = Array.new
+    @last_ids = Array.new
+    @new_ids = Array.new
+    set_associations
+  end
+
+  def demote_new_ids
+    @last_ids = @new_ids
+    @new_ids = Array.new
+  end
+
+  def load_ids_by_timestamp(timestamp)
+    ids = model.where("created_at >= ?", timestamp).select(:id).map &:id
+    @new_ids += ids
+    @all_ids += ids
+  end
+
+  def load_ids(ids)
+    @new_ids += ids
+    @all_ids += ids
+  end
+
+  def get_id_count
+    @all_ids = @all_ids.uniq || []
+    @all_ids.count
+  end
+
+  def get_new_associated_ids(a)
+    model.where(id: last_ids).select(a.foreign_key).map { |r| r.send(a.foreign_key) }
+  end
+
+  def copy_records
+    return nil if all_ids.blank?
+
+    records = model.where(id: all_ids).load
 
     model.establish_connection("distyll")
-    records.each do |record|
-      model.create!(record.attributes)
-    end
+    records.each { |record| model.new(record.attributes).save!(validate: false) }
     model.establish_connection(Rails.env)
+
+    records
   end
 
-  def get_associated_records(records, association)
-    puts "Getting Associated #{association.name.to_s.titleize.pluralize}"
+  private
 
-    associated_records = []
-    records.each do |r|
-      associated_records << r.send(association.name)
+  def set_associations
+    @associations = Array.new
+    model.reflect_on_all_associations.each do |association|
+      if association.belongs_to? && association.through_reflection.nil?
+        @associations << association
+      end
     end
-    associated_records.compact.uniq
   end
 
 end
