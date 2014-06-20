@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "distyll"
-  s.version = "0.0.0"
+  s.version = "1.0.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Mason F. Matthews"]
-  s.date = "2014-06-03"
+  s.date = "2014-06-20"
   s.description = "Have you ever had a 100GB production database and been unable to test on an internally consistent subset of the data?  Distyll is your answer."
   s.email = "mason.f.matthews@gmail.com"
   s.extra_rdoc_files = [
