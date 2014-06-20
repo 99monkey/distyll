@@ -85,6 +85,7 @@ class DistyllModelProfile
     @all_ids.count
   end
 
+  # This is the first method in which chunking for Oracle's 1000 IN limit would be necessary
   def get_new_associated_ids(a)
     if a.belongs_to?
       model.where(id: prior_ids.to_a).select(a.foreign_key).map { |r| r.send(a.foreign_key) }
@@ -94,6 +95,7 @@ class DistyllModelProfile
     end
   end
 
+  # This is the second method in which chunking for Oracle's 1000 IN limit would be necessary
   def copy_records
     return nil if all_ids.blank?
 
