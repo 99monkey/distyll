@@ -27,7 +27,7 @@ and is smaller.
 1. Run <code>rake db:create RAILS_ENV=distyll</code>
 1. Run <code>rake db:schema:load RAILS_ENV=distyll</code>
 1. Run <code>rails console</code>
-1. Call <code>Distyll.new(model_names, created_since)</code>, passing it an array of strings of the core models and a date after which core records will be copied.
+1. Call <code>Distyll.run(model_names, created_since)</code>, passing it an array of the core models and a date after which core records will be copied.
 
 If you need to clear out the distyll database and try again with different parameters, just go back to the <code>schema:load</code> step and continue from there.
 
@@ -44,8 +44,8 @@ If you need to clear out the distyll database and try again with different param
 == Next Steps for distyll
 
 * Distyll only traverses belongs_to associations for now.  Need to consider other association types.
-* Is likely to cause problems with single table inheritance.  Could probably refer to table names rather than model names when traversing relationships... but this would still be an issue for the base models.
-* Currently performs "IN" query.  In Oracle, this is limited to 1000 values, so I would need to chunk them for that DBMS.
+* Distyll is likely to cause problems with single table inheritance.  Could probably refer to table names rather than model names when traversing relationships... but this would still be an issue for the base models.
+* Currently performs "IN" queries.  In Oracle, this is limited to 1000 values, so I would need to chunk them for that DBMS.
 * Tests.  I know.  I just don't yet have my head around how to test something that's SO model- and database-centric, when those models and databases aren't present in the gem.  Any advice would be appreciated.
 
 == Copyright
