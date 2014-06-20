@@ -11,13 +11,37 @@ However, a record created today may have an associated record (via a foreign key
 years ago.  If you slice the entire database by created_at timestamps, you'll have foreign keys which point
 nowhere.  Not very helpful for ensuring that your new feature works on production data.
 
-Distyll's solution is to start from a set of "core" ActiveRecord models supplied at initialization time
+Distyll's solution is to start from a set of "core" ActiveRecord models supplied at runtime
 (plus a date threshold for these models), and only pull those that have been created since the date
-threshold.  It then traverses all belongs_to relationships from those core models and pulls in all of those
-related records.
+threshold.  It then traverses associations from the core models and pulls in associated records (details
+in the next section).
 
 Consequently, you end up with a data set that is representative of production, is internally consistent,
 and is smaller.
+
+== Associations and associated records
+
+Distyll starts from the core models and stores the ids of all core records with created_at timestamps
+after the date threshold.  It also marks these core models as <code>include_has_many</code>.  This means
+that <code>has_many</code> and <code>has_and_belongs_to_many</code> relationships SHOULD be traversed out
+of the model.  Distyll then counts all the pertinent ids across all pertinent models and starts a loop.
+
+At each step of the loop, for each model in distyll's list of pertinent models, it reaches out via all
+belongs_to associations (and other associations if the model is marked as <code>include_has_many</code>).
+Using these associations, it expands both (a) the set of pertinent models to be copied and (b) the
+pertinent ids for each of the pertinient models.  In each step, it is only reaching out to associated
+models for pertinent ids which are new since the previous loop.  This cuts down on query time.
+
+There is a trick with has_many association traversal. The core models do allow for traversal "down" (into
+has_many and habtm associations), and any direct descendants of the core models continue traversal down.
+However, if a descendant's associations are then followed "up" (through a belongs_to), then that parent
+cannot subsequently traverse down.  In essence, "include_has_many" is contagious down, but not up.
+
+Distyll also ignores "through" relationships.  It assumes that those associations will be covered via the
+multi-step non-through traversal.
+
+The looping stops when the total number of ids has not increased since the previous loop.  Iterating with
+a while was necessary due to self-referrential joins.  They prevent the use of a clean recursive algorithm.
 
 == Using distyll in your project
 
@@ -27,9 +51,11 @@ and is smaller.
 1. Run <code>rake db:create RAILS_ENV=distyll</code>
 1. Run <code>rake db:schema:load RAILS_ENV=distyll</code>
 1. Run <code>rails console</code>
-1. Call <code>Distyll.run(model_names, created_since)</code>, passing it an array of the core models and a date after which core records will be copied.
+1. Call <code>Distyll.run(model_names, created_since)</code>, passing it an array of the core models and a
+date after which core records will be copied.
 
-If you need to clear out the distyll database and try again with different parameters, just go back to the <code>schema:load</code> step and continue from there.
+If you need to clear out the distyll database and try again with different parameters, just go back to the
+<code>schema:load</code> step and continue from there.
 
 == Contributing to distyll
 
@@ -39,13 +65,19 @@ If you need to clear out the distyll database and try again with different param
 * Start a feature/bugfix branch.
 * Commit and push until you are happy with your contribution.
 * Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
-* Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
+* Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or
+is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
 
 == Next Steps for distyll
 
-* Distyll only traverses belongs_to associations for now.  Need to consider other association types.
-* Currently performs "IN" queries.  In Oracle, this is limited to 1000 values, so I would need to chunk them for that DBMS.
-* Tests.  I know.  I just don't yet have my head around how to test something that's SO model- and database-centric, when those models and databases aren't present in the gem.  Any advice would be appreciated.
+* When finding pertinent ids across polymorphic has_many and habtm associations, Distyll currently ignores
+the _type field, which may cause it to save more ids from the associated table than needed (if the foreign
+key matches some other record in a different table but the _type doesn't match the current model.)
+* Currently performs "IN" queries.  In Oracle, this is limited to 1000 values, so I would need to chunk
+them for that DBMS.
+* Tests.  I know.  I just don't yet have my head around how to test something that's SO model- and
+database-centric, when those models and databases aren't present in the gem.  Any advice would be
+appreciated.
 
 == Copyright
 

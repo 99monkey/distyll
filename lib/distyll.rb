@@ -5,7 +5,7 @@ class Distyll
 
     base_models.each do |model|
       if @model_profiles[model].nil?
-        base_profile = DistyllModelProfile.new(model)
+        base_profile = DistyllModelProfile.new(model, true)
         base_profile.load_ids_by_timestamp(created_since)
         @model_profiles[model] = base_profile
       end
@@ -21,7 +21,12 @@ class Distyll
       @model_profiles.dup.each_value do |profile|
         unless profile.prior_ids.blank?
           profile.associations.each do |a|
-            find_or_store_profile(a.klass).load_ids(profile.get_new_associated_ids(a))
+            # We DO want to make the associated profile continue to traverse has_manies if
+            #   (a) The current profile traverses has_manies AND
+            #   (b) The association we're about to traverse is a has_many.
+            contagious_has_many = profile.include_has_many && !(a.belongs_to? || a.has_and_belongs_to_many?)
+
+            find_or_store_profile(a.klass, contagious_has_many).load_ids(profile.get_new_associated_ids(a))
           end
         end
       end
@@ -39,8 +44,8 @@ class Distyll
     @model_profiles.each_value.sum &:get_id_count
   end
 
-  def self.find_or_store_profile(model)
-    @model_profiles[model] ||= DistyllModelProfile.new(model)
+  def self.find_or_store_profile(model, include_has_many)
+    @model_profiles[model] ||= DistyllModelProfile.new(model, include_has_many)
   end
 
 end
@@ -48,10 +53,11 @@ end
 
 
 class DistyllModelProfile
-  attr_reader :model, :record_count, :associations, :all_ids, :prior_ids, :current_ids
+  attr_reader :model, :include_has_many, :record_count, :associations, :all_ids, :prior_ids, :current_ids
 
-  def initialize(m)
+  def initialize(m, include_h_m = false)
     @model = m
+    @include_has_many = include_h_m
     @record_count = m.count
     @all_ids = Set.new
     @prior_ids = Set.new
@@ -80,7 +86,12 @@ class DistyllModelProfile
   end
 
   def get_new_associated_ids(a)
-    model.where(id: prior_ids.to_a).select(a.foreign_key).map { |r| r.send(a.foreign_key) }
+    if a.belongs_to?
+      model.where(id: prior_ids.to_a).select(a.foreign_key).map { |r| r.send(a.foreign_key) }
+    else
+      # Polymorphism could slow us down here, causing us to pull more records than we want to.
+      a.klass.where(a.foreign_key => prior_ids.to_a).select(:id).map { |r| r.send(:id) }
+    end
   end
 
   def copy_records
@@ -100,8 +111,10 @@ class DistyllModelProfile
   def set_associations
     @associations = Array.new
     model.reflect_on_all_associations.each do |association|
-      if association.belongs_to? && association.through_reflection.nil?
-        @associations << association
+      if association.through_reflection.nil?
+        if association.belongs_to? || self.include_has_many
+          @associations << association
+        end
       end
     end
   end
