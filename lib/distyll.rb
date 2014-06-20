@@ -53,41 +53,40 @@ class DistyllModelProfile
   def initialize(m)
     @model = m
     @record_count = m.count
-    @all_ids = Array.new
-    @prior_ids = Array.new
-    @current_ids = Array.new
+    @all_ids = Set.new
+    @prior_ids = Set.new
+    @current_ids = Set.new
     set_associations
   end
 
   def demote_current_ids
     @prior_ids = @current_ids
-    @current_ids = Array.new
+    @current_ids = Set.new
   end
 
   def load_ids_by_timestamp(timestamp)
     ids = model.where("created_at >= ?", timestamp).select(:id).map &:id
-    @current_ids += ids
-    @all_ids += ids
+    @current_ids.merge(ids)
+    @all_ids.merge(ids)
   end
 
   def load_ids(ids)
-    @current_ids += ids
-    @all_ids += ids
+    @current_ids.merge(ids)
+    @all_ids.merge(ids)
   end
 
   def get_id_count
-    @all_ids = @all_ids.uniq || []
     @all_ids.count
   end
 
   def get_new_associated_ids(a)
-    model.where(id: prior_ids).select(a.foreign_key).map { |r| r.send(a.foreign_key) }
+    model.where(id: prior_ids.to_a).select(a.foreign_key).map { |r| r.send(a.foreign_key) }
   end
 
   def copy_records
     return nil if all_ids.blank?
 
-    records = model.where(id: all_ids).load
+    records = model.where(id: all_ids.to_a).load
 
     model.establish_connection("distyll")
     records.each { |record| model.new(record.attributes).save!(validate: false) }
