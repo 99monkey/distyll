@@ -1,24 +1,16 @@
 class Distyll
 
   def self.run(base_models, created_since)
-    @model_profiles = Hash.new
+    @profiles = populate_base_profiles(base_models)
 
-    base_models.each do |model|
-      if @model_profiles[model].nil?
-        base_profile = DistyllModelProfile.new(model, true)
-        base_profile.load_ids_by_timestamp(created_since)
-        @model_profiles[model] = base_profile
-      end
-    end
-
-    prior_count = -1
-    while prior_count != current_count
-      prior_count = current_count
-      @model_profiles.each_value &:demote_current_ids
+    prior_total = -1
+    while prior_total != total_id_count(profiles)
+      prior_total = total_id_count(profiles)
+      @profiles.each_value &:demote_current_ids
 
       # .dup is necessary here because of Ruby 1.9's "RuntimeError: can't add a new
       #   key into hash during iteration" encountered in self.find_or_store_profile.
-      @model_profiles.dup.each_value do |profile|
+      @profiles.dup.each_value do |profile|
         unless profile.prior_ids.blank?
           profile.associations.each do |a|
             # We DO want to make the associated profile continue to traverse has_manies if
@@ -32,20 +24,35 @@ class Distyll
       end
     end
 
-    @model_profiles.each_value do |profile|
-      profile.copy_records
-    end
+    copy_all_records(@profiles)
   end
 
 
   private
 
-  def self.current_count
-    @model_profiles.each_value.sum &:get_id_count
+  def self.populate_base_profiles(base_models)
+    base_profiles = Hash.new
+    base_models.each do |model|
+      if base_profiles[model].nil?
+        profile = DistyllModelProfile.new(model, true)
+        profile.load_ids_by_timestamp(created_since)
+        base_profiles[model] = profile
+      end
+    end
+  end
+
+  def self.copy_all_records(profiles)
+    profiles.each_value do |profile|
+      profile.copy_records
+    end
+  end
+
+  def self.total_id_count(profiles)
+    profiles.each_value.sum &:get_id_count
   end
 
   def self.find_or_store_profile(model, include_has_many)
-    @model_profiles[model] ||= DistyllModelProfile.new(model, include_has_many)
+    @profiles[model] ||= DistyllModelProfile.new(model, include_has_many)
   end
 
 end
