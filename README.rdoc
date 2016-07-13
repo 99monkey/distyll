@@ -44,6 +44,7 @@ If you need to clear out the distyll database and try again with different param
 
 == Next Steps for distyll
 
+* Upgrade Ruby and Rails versions.
 * When finding pertinent ids across polymorphic has_many and habtm associations, Distyll currently ignores the _type field, which may cause it to save more ids from the associated table than needed (if the foreign key matches some other record in a different table but the _type doesn't match the current model.)
 * Currently performs "IN" queries.  In Oracle, this is limited to 1000 values, so I would need to chunk them for that DBMS.
 * Sometimes bad code in the app can cause the run method to blow up. For instance, I had left a <code>belongs_to</code> line in a model when there wasn't a foreign key for that relationship anymore.  Distyll blew up spectacularly.  This helped me with code quality, but that's really not the point of this gem.  In any case, Distyll could fail more gracefully.
@@ -53,4 +54,3 @@ If you need to clear out the distyll database and try again with different param
 
 Copyright (c) 2014 Mason F. Matthews. See LICENSE.txt for
 further details.
-
