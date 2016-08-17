@@ -109,8 +109,9 @@ class DistyllModelProfile
     records = model.where(id: all_ids.to_a).load
 
     model.establish_connection("distyll")
+    model.establish_connection(ActiveRecord::Base.configurations['distyll'])
     records.each { |record| model.new(record.attributes).save!(validate: false) }
-    model.establish_connection(Rails.env)
+    model.establish_connection(ActiveRecord::Base.configurations[Rails.env])
 
     records
   end
