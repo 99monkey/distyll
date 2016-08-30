@@ -61,6 +61,7 @@ end
 
 class DistyllModelProfile
   attr_reader :model, :include_has_many, :record_count, :associations, :all_ids, :prior_ids, :current_ids
+  @@db_source_config
 
   def initialize(m, include_h_m = false)
     @model = m
@@ -108,8 +109,8 @@ class DistyllModelProfile
 
     records = model.where(id: all_ids.to_a).load
 
-    model.establish_connection("distyll")
-    model.establish_connection(ActiveRecord::Base.configurations['distyll'])
+    # model.establish_connection("distyll")
+    model.establish_connection(@@db_source_config)
     records.each { |record| model.new(record.attributes).save!(validate: false) }
     model.establish_connection(ActiveRecord::Base.configurations[Rails.env])
 
